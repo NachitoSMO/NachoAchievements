@@ -10,6 +10,8 @@ namespace NachoAchievements.Patches
         [HarmonyPrefix]
         private static void AddScrapAchievements(RoundManager __instance, GrabbableObject scrapObject)
         {
+            NachoAchievements.Instance.StartCoroutine(NachoAchievements.Instance.CheckSingleRunProgress());
+
             if (!scrapObject.scrapPersistedThroughRounds && !__instance.scrapCollectedThisRound.Contains(scrapObject) && scrapObject.itemProperties.isScrap)
             {
                 if (scrapObject.itemProperties.itemName == "Hive" && scrapObject.playerHeldBy == StartOfRound.Instance.localPlayerController)
@@ -35,8 +37,6 @@ namespace NachoAchievements.Patches
                     NachoAchievements.AddAchievement("artFullClear");
                 }
             }
-
-            NachoAchievements.Instance.StartCoroutine(NachoAchievements.Instance.CheckSingleRunProgress());
         }
 
         [HarmonyPatch(nameof(RoundManager.FinishGeneratingLevel))]
@@ -45,11 +45,7 @@ namespace NachoAchievements.Patches
         {
             if (StartOfRound.Instance.currentLevelID == 10)
             {
-                NachoAchievements.Instance.Invoke("SetartFullClearsingleRunCount", 2f);
-            }
-            else
-            {
-                NachoAchievements.Achievements["artFullClearsingleRun"]["MinMaxing"] = 999;
+                NachoAchievements.Instance.Invoke("SetArtFullClearCount", 2f);
             }
         }
 

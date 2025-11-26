@@ -681,6 +681,20 @@ namespace NachoAchievements
             AddKillServerRpc(killerId, enemyName);
         }
 
+        public void SetArtFullClearCount()
+        {
+            Achievements["artFullClear"]["MinMaxing"] = 0;
+            GrabbableObject[] array = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
+            for (int num6 = 0; num6 < array.Length; num6++)
+            {
+                if (array[num6].itemProperties.isScrap && !array[num6].isInShipRoom && !array[num6].isInElevator)
+                {
+                    Achievements["artFullClear"]["MinMaxing"]++;
+                }
+            }
+            
+        }
+
         public IEnumerator CheckKillEnemyAchievements(EnemyAI __instance, int force = 1, PlayerControllerB playerWhoHit = null)
         {
             yield return new WaitForFixedUpdate();
