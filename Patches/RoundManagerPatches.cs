@@ -10,19 +10,20 @@ namespace NachoAchievements.Patches
         [HarmonyPrefix]
         private static void AddScrapAchievements(RoundManager __instance, GrabbableObject scrapObject)
         {
-            if (!scrapObject.scrapPersistedThroughRounds && !__instance.scrapCollectedThisRound.Contains(scrapObject) && scrapObject.itemProperties.isScrap && scrapObject.playerHeldBy == StartOfRound.Instance.localPlayerController)
+            if (!scrapObject.scrapPersistedThroughRounds && !__instance.scrapCollectedThisRound.Contains(scrapObject) && scrapObject.itemProperties.isScrap)
             {
-                if (scrapObject.itemProperties.itemName == "Hive")
+                if (scrapObject.itemProperties.itemName == "Hive" && scrapObject.playerHeldBy == StartOfRound.Instance.localPlayerController)
                 {
                     NachoAchievements.AddAchievement("beesCollect");
                 }
 
-                if (scrapObject.itemProperties.itemName == "Zed Dog")
+                if (scrapObject.itemProperties.itemName == "Zed Dog" && scrapObject.playerHeldBy == StartOfRound.Instance.localPlayerController)
                 {
                     NachoAchievements.AddAchievement("zedDogCollect");
                 }
 
-                NachoAchievements.AddAchievement("scrapCollect");
+                if (scrapObject.playerHeldBy == StartOfRound.Instance.localPlayerController)
+                    NachoAchievements.AddAchievement("scrapCollect");
 
                 if (scrapObject.itemProperties.itemName == "Apparatus" && StartOfRound.Instance.currentLevelID == 12 && RoundManager.Instance.dungeonFinishedGeneratingForAllPlayers)
                 {
