@@ -1,0 +1,12 @@
+/.vs
+NachoAchievements.csproj.user
+NachoAchievements.template.csproj.user
+/obj
+/.vs/ProjectEvaluation
+/.vs/NachoAchievements
+/.vs/NachoAchievements/DesignTimeBuild
+/.vs/NachoAchievements/FileContentIndex
+/.vs/NachoAchievements/v17
+/.vs/ProjectEvaluation
+/obj/Debug/netstandard2.1
+/bin/Debug/netstandard2.1
