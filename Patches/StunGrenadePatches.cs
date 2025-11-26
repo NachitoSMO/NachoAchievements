@@ -24,7 +24,7 @@ namespace NachoAchievements.Patches
                         EnemyAICollisionDetect componentInChildren2 = array[i].gameObject.GetComponentInChildren<EnemyAICollisionDetect>();
                         if (componentInChildren2 != null && componentInChildren2.mainScript.IsOwner && num2 < 4.5f && !list.Contains(componentInChildren2.mainScript) && componentInChildren2.mainScript.enemyType.canDie)
                         {
-                            if (componentInChildren2.mainScript.enemyType.enemyName == "ForestGiant" && componentInChildren2.mainScript.enemyHP > 0)
+                            if (componentInChildren2.mainScript.enemyType.enemyName == "ForestGiant" && !componentInChildren2.mainScript.isEnemyDead)
                             {
                                 NachoAchievements.AddAchievement("killGiantWithEgg");
                             }
