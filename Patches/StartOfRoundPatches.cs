@@ -43,6 +43,10 @@ namespace NachoAchievements.Patches
         [HarmonyPostfix]
         private static void OnGameStart()
         {
+            NachoAchievements.Achievements["artFullClear"]["MinMaxing"] = 999;
+            NachoAchievements.Achievements["artFullClear"]["progress"] = 0;
+            NachoAchievements.Achievements["killEnemiesShotgun"]["progress"] = 0;
+
             List<string> keys = [.. NachoAchievements.Achievements.Keys];
             int totalAchievements = 0;
 
