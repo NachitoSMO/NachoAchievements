@@ -10,7 +10,7 @@ namespace NachoAchievements.Patches
         [HarmonyPrefix]
         private static void AddScrapAchievements(RoundManager __instance, GrabbableObject scrapObject)
         {
-            if (!scrapObject.scrapPersistedThroughRounds && !__instance.scrapCollectedThisRound.Contains(scrapObject) && scrapObject.itemProperties.isScrap)
+            if (!scrapObject.scrapPersistedThroughRounds && !__instance.scrapCollectedThisRound.Contains(scrapObject) && scrapObject.itemProperties.isScrap && scrapObject.playerHeldBy == StartOfRound.Instance.localPlayerController)
             {
                 if (scrapObject.itemProperties.itemName == "Hive")
                 {
