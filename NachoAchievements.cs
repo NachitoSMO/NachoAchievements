@@ -181,29 +181,15 @@ namespace NachoAchievements
                     TextMeshProUGUI tmp = result.gameObject.GetComponentInChildren<TextMeshProUGUI>();
                     if (tmp != null && (TMP == null || tmp.text != prevText))
                     {
-                        string input = tmp.text;
-                        bool containsDigit = false;
+                        string[] values = [.. AchievementDescriptions.Values];
 
-                        for (int i = 0; i < input.Length; i++)
+                        int index = AchievementsText.IndexOf(result.gameObject);
+                        if (index != -1)
                         {
-                            if (char.IsDigit(input[i]))
-                            {
-                                containsDigit = true;
-                            }
-                        }
-
-                        if (containsDigit)
-                        {
-                            int index = input.IndexOf(input.First(char.IsDigit));
-                            input = input.Substring(0, index).Trim();
-                        }
-
-
-                        if (NachoAchievements.AchievementDescriptions.ContainsKey(input))
-                        {
-                            string output = NachoAchievements.AchievementDescriptions[input];
+                            string output = values[index];
                             NachoAchievements.CreateAchievementDescription(tmp, output);
                         }
+                        
                     }
                 }
 
