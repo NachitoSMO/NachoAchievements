@@ -34,7 +34,7 @@ namespace NachoAchievements.Patches
             NachoAchievements.Achievements["artFullClear"]["MinMaxing"] = 999;
             NachoAchievements.Achievements["artFullClear"]["progress"] = 0;
             NachoAchievements.Achievements["killEnemiesShotgun"]["progress"] = 0;
-            if (RoundManagerPatches.sapsuckerEggsToday >= 1) NachoAchievements.AddAchievement("sapsuckerEggs");
+            if (RoundManagerPatches.sapsuckerEggsToday >= 1 && !__instance.allPlayersDead) NachoAchievements.AddAchievement("sapsuckerEggs");
             RoundManagerPatches.sapsuckerEggsToday = 0;
 
             int deadMates = 0;

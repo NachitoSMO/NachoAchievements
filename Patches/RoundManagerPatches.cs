@@ -60,6 +60,8 @@ namespace NachoAchievements.Patches
             if (StartOfRound.Instance.localPlayerController.isHostPlayerObject)
                 ES3.Save("NachoMoonsVisited", StartOfRoundPatches.moonsVisited, GameNetworkManager.Instance.currentSaveFileName);
 
+            sapsuckerEggsToday = 0;
+
             NachoAchievements.Instance.StartCoroutine(NachoAchievements.Instance.CheckSingleRunProgress());
         }
 

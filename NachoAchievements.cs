@@ -467,7 +467,7 @@ namespace NachoAchievements
 
         public IEnumerator CheckSingleRunProgress()
         {
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(0.4f);
             Instance.ResetSingleRunProgress();
 
             Instance.AddTojetpackCollectsingleRunProgress();
@@ -537,7 +537,7 @@ namespace NachoAchievements
             {
                 bool inShip = false;
 
-                if (grabbable.itemProperties.isScrap && !grabbable.deactivated && !grabbable.itemUsedUp && grabbable.isInShipRoom)
+                if (grabbable.itemProperties.isScrap && !grabbable.deactivated && !grabbable.itemUsedUp && StartOfRound.Instance.shipBounds.bounds.Contains(grabbable.gameObject.transform.position))
                 {
                     inShip = true;
                 }
@@ -565,7 +565,7 @@ namespace NachoAchievements
 
             foreach (var jet in array)
             {
-                if (jet.itemProperties.itemName == "Jetpack" && !jet.deactivated && !jet.itemUsedUp && jet.isInShipRoom)
+                if (jet.itemProperties.itemName == "Jetpack" && !jet.deactivated && !jet.itemUsedUp && StartOfRound.Instance.shipBounds.bounds.Contains(jet.gameObject.transform.position))
                 {
                     AddAchievement("jetpackCollectsingleRun");
                 }
@@ -591,7 +591,7 @@ namespace NachoAchievements
 
             foreach (var walkie in array2)
             {
-                if (walkie.itemProperties.itemName == "Walkie-talkie" && !walkie.deactivated && !walkie.itemUsedUp && walkie.isInShipRoom)
+                if (walkie.itemProperties.itemName == "Walkie-talkie" && !walkie.deactivated && !walkie.itemUsedUp && StartOfRound.Instance.shipBounds.bounds.Contains(walkie.gameObject.transform.position))
                 {
                     AddAchievement("thirtyWalkiessingleRun");
                 }
