@@ -1,5 +1,6 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NachoAchievements.Patches
@@ -78,6 +79,36 @@ namespace NachoAchievements.Patches
                     }
                 }
             }
+        }
+
+        [HarmonyPatch(nameof(PlayerControllerB.ConnectClientToPlayerObject))]
+        [HarmonyPostfix]
+        private static void OnConnection(PlayerControllerB __instance)
+        {
+            NachoAchievements.Achievements["artFullClear"]["MinMaxing"] = 999;
+            NachoAchievements.Achievements["artFullClear"]["progress"] = 0;
+            NachoAchievements.Achievements["killEnemiesShotgun"]["progress"] = 0;
+
+            List<string> keys = [.. NachoAchievements.Achievements.Keys];
+            int totalAchievements = 0;
+
+            foreach (string achievement in keys)
+            {
+                if (achievement == "getAll") continue;
+                List<string> keys2 = [.. NachoAchievements.Achievements[achievement].Keys];
+
+                foreach (string a in keys2)
+                {
+                    if (a == "progress") continue;
+                    if (a == "completed") continue;
+                    totalAchievements++;
+                }
+            }
+
+            NachoAchievements.Achievements["getAll"]["Completionist"] = totalAchievements;
+
+            NachoAchievements.AddItems();
+            NachoAchievements.Instance.StartCoroutine(NachoAchievements.Instance.CheckSingleRunProgress());
         }
     }
 }

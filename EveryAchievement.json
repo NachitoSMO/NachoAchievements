@@ -201,6 +201,16 @@
         "completed": 0,
         "Challenger": 1
     },
+    "sapsuckerEggs": {
+        "progress": 0,
+        "completed": 0,
+        "My Baby Now": 1
+    },
+    "visitMoonssingleRun": {
+        "progress": 0,
+        "completed": 0,
+        "World Tour": 11
+    },
     "getAll": {
         "progress": 0,
         "completed": 0,

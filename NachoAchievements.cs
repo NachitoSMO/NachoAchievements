@@ -1,6 +1,7 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using Dissonance;
 using GameNetcodeStuff;
 using HarmonyLib;
 using NachoAchievements.Patches;
@@ -87,7 +88,7 @@ namespace NachoAchievements
 
             Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
         }
-        
+
         private void Update()
         {
             if (achievementEnterButton != null)
@@ -468,11 +469,13 @@ namespace NachoAchievements
         {
             yield return new WaitForSeconds(0.2f);
             Instance.ResetSingleRunProgress();
+
             Instance.AddTojetpackCollectsingleRunProgress();
             Instance.AddToWalkieCollectProgress();
             Instance.AddToMuseumProgress();
             Instance.AddToSigurdLoreProgress();
             Instance.AddToInteriorDecoratorProgress();
+            Instance.AddToMoonsVisitedProgressServerRpc();
 
             List<string> keys1 = [.. scrapFound.Keys];
 
@@ -592,6 +595,26 @@ namespace NachoAchievements
                 {
                     AddAchievement("thirtyWalkiessingleRun");
                 }
+            }
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void AddToMoonsVisitedProgressServerRpc()
+        {
+            StartOfRoundPatches.moonsVisited = ES3.Load("NachoMoonsVisited", GameNetworkManager.Instance.currentSaveFileName, new List<int>());
+            AddToMoonsVisitedProgressClientRpc(StartOfRoundPatches.moonsVisited.ToArray());
+        }
+
+        [ClientRpc]
+        public void AddToMoonsVisitedProgressClientRpc(int[] moons)
+        {
+            StartOfRoundPatches.moonsVisited = moons.ToList();
+
+            int current = Achievements["visitMoonssingleRun"]["progress"];
+
+            for (int i = current; i < moons.Length; i++)
+            {
+                AddAchievement("visitMoonssingleRun");
             }
         }
 

@@ -8,6 +8,7 @@ namespace NachoAchievements.Patches
     [HarmonyPatch(typeof(StartOfRound))]
     internal class StartOfRoundPatches
     {
+        public static List<int> moonsVisited = new List<int>();
         [HarmonyPatch(nameof(StartOfRound.ShipLeave))]
         [HarmonyPostfix]
         public static void OnShipLeave(StartOfRound __instance)
@@ -18,13 +19,23 @@ namespace NachoAchievements.Patches
             }
         }
 
+        [HarmonyPatch(nameof(StartOfRound.Start))]
+        [HarmonyPostfix]
+        private static void OnStart(StartOfRound __instance)
+        {
+            moonsVisited.Clear();
+            moonsVisited = ES3.Load("NachoMoonsVisited", GameNetworkManager.Instance.currentSaveFileName, new List<int>());
+        }
+
         [HarmonyPatch(nameof(StartOfRound.ShipHasLeft))]
         [HarmonyPostfix]
-        private static void WhenShipReady(StartOfRound __instance)
+        private static void OnShipLeft(StartOfRound __instance)
         {
             NachoAchievements.Achievements["artFullClear"]["MinMaxing"] = 999;
             NachoAchievements.Achievements["artFullClear"]["progress"] = 0;
             NachoAchievements.Achievements["killEnemiesShotgun"]["progress"] = 0;
+            if (RoundManagerPatches.sapsuckerEggsToday >= 1) NachoAchievements.AddAchievement("sapsuckerEggs");
+            RoundManagerPatches.sapsuckerEggsToday = 0;
 
             int deadMates = 0;
             List<PlayerControllerB> alivePlayers = new List<PlayerControllerB>();
@@ -36,36 +47,6 @@ namespace NachoAchievements.Patches
 
             if (deadMates >= 3 && alivePlayers.Contains(__instance.localPlayerController)) NachoAchievements.AddAchievement("clutch");
 
-            NachoAchievements.Instance.StartCoroutine(NachoAchievements.Instance.CheckSingleRunProgress());
-        }
-
-        [HarmonyPatch(nameof(StartOfRound.Start))]
-        [HarmonyPostfix]
-        private static void OnGameStart()
-        {
-            NachoAchievements.Achievements["artFullClear"]["MinMaxing"] = 999;
-            NachoAchievements.Achievements["artFullClear"]["progress"] = 0;
-            NachoAchievements.Achievements["killEnemiesShotgun"]["progress"] = 0;
-
-            List<string> keys = [.. NachoAchievements.Achievements.Keys];
-            int totalAchievements = 0;
-
-            foreach (string achievement in keys)
-            {
-                if (achievement == "getAll") continue;
-                List<string> keys2 = [.. NachoAchievements.Achievements[achievement].Keys];
-
-                foreach (string a in keys2)
-                {
-                    if (a == "progress") continue;
-                    if (a == "completed") continue;
-                    totalAchievements++;
-                }
-            }
-
-            NachoAchievements.Achievements["getAll"]["Completionist"] = totalAchievements;
-
-            NachoAchievements.AddItems();
             NachoAchievements.Instance.StartCoroutine(NachoAchievements.Instance.CheckSingleRunProgress());
         }
 

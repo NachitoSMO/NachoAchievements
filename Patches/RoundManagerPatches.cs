@@ -6,6 +6,7 @@ namespace NachoAchievements.Patches
     [HarmonyPatch(typeof(RoundManager))]
     internal class RoundManagerPatches
     {
+        public static int sapsuckerEggsToday = 0;
         [HarmonyPatch(nameof(RoundManager.CollectNewScrapForThisRound))]
         [HarmonyPrefix]
         private static void AddScrapAchievements(RoundManager __instance, GrabbableObject scrapObject)
@@ -36,6 +37,11 @@ namespace NachoAchievements.Patches
                 {
                     NachoAchievements.AddAchievement("artFullClear");
                 }
+
+                if (scrapObject.itemProperties.itemName == "Egg")
+                {
+                    sapsuckerEggsToday++;
+                }
             }
         }
 
@@ -47,6 +53,14 @@ namespace NachoAchievements.Patches
             {
                 NachoAchievements.Instance.Invoke("SetArtFullClearCount", 2f);
             }
+
+            if (!StartOfRoundPatches.moonsVisited.Contains(StartOfRound.Instance.currentLevelID))
+                StartOfRoundPatches.moonsVisited.Add(StartOfRound.Instance.currentLevelID);
+
+            if (StartOfRound.Instance.localPlayerController.isHostPlayerObject)
+                ES3.Save("NachoMoonsVisited", StartOfRoundPatches.moonsVisited, GameNetworkManager.Instance.currentSaveFileName);
+
+            NachoAchievements.Instance.StartCoroutine(NachoAchievements.Instance.CheckSingleRunProgress());
         }
 
         [HarmonyPatch(nameof(RoundManager.DestroyTreeAtPosition))]
