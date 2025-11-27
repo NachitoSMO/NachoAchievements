@@ -105,8 +105,7 @@ namespace NachoAchievements
 
                 foreach (var result in results)
                 {
-                    TextMeshProUGUI tmp = result.gameObject.GetComponentInChildren<TextMeshProUGUI>();
-                    if (tmp != null && tmp.text == "> Achievements")
+                    if (result.gameObject == achievementEnterButton)
                     {
                         if (Mouse.current.leftButton.isPressed)
                         {
