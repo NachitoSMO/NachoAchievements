@@ -84,21 +84,13 @@ namespace NachoAchievements.Patches
                     {
                         if (component2.mainScript.isEnemyDead && enemiesThatWereAlive.Contains(component2.mainScript))
                         {
-                            if (__instance.playerHeldBy == null && component2.mainScript.enemyType.enemyName == "Nutcracker")
-                            {
-                                NachoAchievements.AddAchievement("nutcrackerShootEnemy");
-                            }
-                            else if (__instance.playerHeldBy != null && __instance.playerHeldBy == StartOfRound.Instance.localPlayerController)
-                            {
-                                if (component2.mainScript.enemyType.enemyName == "Tulip Snake" && force == 5) NachoAchievements.AddAchievement("killTulipShotgun");
-
-                                NachoAchievements.AddAchievement("killEnemiesShotgun");
-                                pierceCount++;
-                                if (pierceCount == 2)
-                                {
-                                    NachoAchievements.AddAchievement("shotgunPierceEnemy");
-                                }
-                            }
+                            Dictionary<string, string> callback = new Dictionary<string, string>();
+                            callback.Add("callback", "On Kill Enemy");
+                            callback.Add("enemy", component2.mainScript.enemyType.enemyName);
+                            callback.Add("weapon", "Shotgun");
+                            callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
+                            callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                            NachoAchievements.CheckAchievements(callback);
                         }
                         list.Add(component2.mainScript);
                     }

@@ -1,13 +1,8 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using Dissonance;
-using GameNetcodeStuff;
 using HarmonyLib;
-using NachoAchievements.Patches;
 using Newtonsoft.Json;
-using Steamworks;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,6 +12,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.ProBuilder;
 using UnityEngine.UI;
 
 namespace NachoAchievements
@@ -28,9 +24,7 @@ namespace NachoAchievements
         internal new static ManualLogSource Logger { get; private set; } = null!;
         internal static Harmony? Harmony { get; set; }
 
-        public static Dictionary<string, Dictionary<string, int>> Achievements = new Dictionary<string, Dictionary<string, int>>();
-
-        public static Dictionary<string, string> AchievementDescriptions = new Dictionary<string, string>();
+        public static Dictionary<string, Dictionary<string, string>> Achievements = new Dictionary<string, Dictionary<string, string>>();
 
         public static AssetBundle NachoAssets;
 
@@ -80,9 +74,7 @@ namespace NachoAchievements
 
             resetAchievements = Config.Bind<bool>("Debug", "Reset Achievements", false, new ConfigDescription("Wether to reset every achievement next time you boot up the game"));
 
-            Achievements = GetAchievements();
-
-            AchievementDescriptions = GetAchievementDescriptions();
+            CreateAchievements();
 
             WriteAchievements();
 
@@ -181,12 +173,14 @@ namespace NachoAchievements
                     TextMeshProUGUI tmp = result.gameObject.GetComponentInChildren<TextMeshProUGUI>();
                     if (tmp != null && (TMP == null || tmp.text != prevText))
                     {
-                        string[] values = [.. AchievementDescriptions.Values];
-
+                        string[] achievements = [.. Achievements.Keys];
+                        
                         int index = AchievementsText.IndexOf(result.gameObject);
                         if (index != -1)
                         {
-                            string output = values[index];
+                            if (!Achievements.ContainsKey(achievements[index])) continue;
+                            if (!Achievements[achievements[index]].ContainsKey("description")) continue;
+                            string output = Achievements[achievements[index]]["description"];
                             NachoAchievements.CreateAchievementDescription(tmp, output);
                         }
                         
@@ -222,88 +216,229 @@ namespace NachoAchievements
             Logger.LogDebug("Finished patching!");
         }
 
-        public static string LoadEmbeddedJson(string fileName)
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = fileName;
-
-            using (Stream stream = assembly.GetManifestResourceStream("NachoAchievements." + resourceName))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                string result = reader.ReadToEnd();
-                return result;
-            }
-        }
-
-        public static void AddAchievement(string achievement)
+        public static void CheckAchievements(Dictionary<string, string> callback)
         {
             List<string> keys = [.. Achievements.Keys];
 
+            if (!callback.ContainsKey("callback"))
+            {
+                Logger.LogError("Error! Callback does not exist.");
+                return;
+            }
+
+
             foreach (string key in keys)
             {
-                if (key == achievement)
+                if (!Achievements[key].ContainsKey("callback"))
                 {
-                    Achievements[key]["progress"] += 1;
+                    Logger.LogError("Error! Achievement " + key + " does not contain a callback. Skipping...");
+                    continue;
+                }
 
-                    List<string> keys2 = [.. Achievements[key].Keys];
-                    int checkCompCount = 0;
-                    foreach (string a in keys2)
+                if (Achievements[key]["callback"] != callback["callback"]) continue;
+
+                List<string> variables = new List<string>();
+
+                List<string> callbackKeys = [.. callback.Keys];
+
+                foreach (string var in callbackKeys)
+                {
+                    if (var == "callback") continue;
+                    variables.Add(var);
+                }
+
+                bool shouldAddAchievement = true;
+
+                foreach (string var in variables)
+                {
+                    string callbackVar = callback[var];
+                    string callbackVarSpecified = string.Empty;
+
+                    if (!Achievements[key].ContainsKey(var))
                     {
-                        if (a == "progress") continue;
-                        if (a == "completed") continue;
-                        checkCompCount++;
-                        if (Achievements[key][a] <= Achievements[key]["progress"] && Achievements[key]["completed"] < checkCompCount)
+                        callbackVarSpecified = "Any";
+                    }
+                    else
+                    {
+                        callbackVarSpecified = Achievements[key][var];
+                    }
+
+                    if (var == "rank")
+                    {
+                        if (int.TryParse(callbackVarSpecified, out int result))
                         {
-                            CreateAchievementGetText(a);
-                            Achievements[key]["completed"] = checkCompCount;
-                            if (achievement != "getAll") AddAchievement("getAll");
+                            if (int.Parse(callbackVar) >= result) continue;
                         }
                     }
+                    else if (var == "soundMinDistance")
+                    {
+                        if (float.TryParse(callbackVarSpecified, out float result))
+                        {
+                            if (float.Parse(callbackVar) <= result) continue;
+                        }
+                    }
+                    else if (callbackVarSpecified == "Unique")
+                    {
+                        var unique = ES3.Load(key, GameNetworkManager.generalSaveDataName, new List<string>());
+
+                        if ((CheckIfSingleRun(key) && Instance.GetUniqueOnServerRpc(key, StartOfRound.Instance.localPlayerController.playerSteamId).Contains(callbackVar)) || !CheckIfSingleRun(key) && unique.Contains(callbackVar))
+                        {
+                            shouldAddAchievement = false;
+                        }
+                        else
+                        {
+                            Instance.SaveUniqueOnServerRpc(key, StartOfRound.Instance.localPlayerController.playerSteamId, callbackVar);
+                            unique.Add(callbackVar);
+                            ES3.Save(key, unique, GameNetworkManager.generalSaveDataName);
+                        }
+                    }
+
+                    if (callbackVar != callbackVarSpecified && callbackVarSpecified != "Any" && callbackVarSpecified != "Unique") shouldAddAchievement = false;
+                }
+
+                if (shouldAddAchievement)
+                {
+                    Achievements[key]["progress"] = (int.Parse(Achievements[key]["progress"]) + 1).ToString();
+                    if (CheckIfSingleRun(key))
+                        Instance.SaveAchievementOnServerRpc(key, int.Parse(Achievements[key]["progress"]), StartOfRound.Instance.localPlayerController.playerSteamId);
+                }
+                
+            }
+
+            foreach (string a in keys)
+            {
+                if (int.Parse(Achievements[a]["progress"]) >= int.Parse(Achievements[a]["count"]) && Achievements[a]["completed"] == "false")
+                {
+                    CreateAchievementGetText(a);
+                    Achievements[a]["completed"] = "true";
                 }
             }
 
             WriteAchievements();
         }
 
-        public static Dictionary<string, Dictionary<string, int>> GetAchievements()
+        public static bool CheckIfSingleRun(string key)
+        {
+            return (Achievements[key].ContainsKey("single run") && Achievements[key]["single run"] == "true");
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void SaveAchievementOnServerRpc(string key, int progress, ulong playerSteamID)
+        {
+            ES3.Save("SingleRun" + key + playerSteamID.ToString(), progress, GameNetworkManager.Instance.currentSaveFileName);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public string[] GetUniqueOnServerRpc(string key, ulong playerSteamID)
+        {
+            return ES3.Load(key + playerSteamID.ToString(), GameNetworkManager.Instance.currentSaveFileName, new List<string>()).ToArray();
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void SaveUniqueOnServerRpc(string key, ulong playerSteamID, string enemy)
+        {
+            List<string> enemiesKilled = ES3.Load(key + playerSteamID, GameNetworkManager.Instance.currentSaveFileName, new List<string>());
+
+            if (!enemiesKilled.Contains(enemy))
+            {
+                enemiesKilled.Add(enemy);
+                ES3.Save(key + playerSteamID, enemiesKilled, GameNetworkManager.Instance.currentSaveFileName);
+            }
+            
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void GetAchievementsOnServerRpc(ulong playerSteamID)
+        {
+            List<string> keys = [.. Achievements.Keys];
+
+            foreach (string key in keys)
+            {
+                if (CheckIfSingleRun(key))
+                {
+                    int progress = ES3.Load("SingleRun" + key + playerSteamID.ToString(), GameNetworkManager.Instance.currentSaveFileName, 0);
+                    SaveAchievementOnClientRpc(key, progress, playerSteamID);
+                }
+            }
+        }
+
+        [ClientRpc]
+        public void SaveAchievementOnClientRpc(string key, int progress, ulong playerSteamID)
+        {
+            if (playerSteamID != GameNetworkManager.Instance.localPlayerController.playerSteamId) return;
+            Achievements[key]["progress"] = progress.ToString();
+        }
+
+        public static void ResetSingleDayAchievements()
+        {
+            List<string> keys = [.. Achievements.Keys];
+            foreach (string key in keys)
+            {
+                if (Achievements[key].ContainsKey("single day") && Achievements[key]["single day"] == "true")
+                {
+                    Achievements[key]["progress"] = "0";
+                }
+            }
+        }
+
+        public static void ResetSingleRunAchievements()
+        {
+            List<string> keys = [.. Achievements.Keys];
+            foreach (string key in keys)
+            {
+                if (CheckIfSingleRun(key))
+                {
+                    Achievements[key]["progress"] = "0";
+                    Instance.SaveAchievementOnServerRpc(key, 0, GameNetworkManager.Instance.localPlayerController.playerSteamId);
+                }
+            }
+        }
+
+        public static void CreateAchievements()
         {
             Util.Paths.CheckFolders();
 
-            string path = Path.Combine(Util.Paths.DataFolder, "advancements.json");
+            string path = Path.Combine(Util.Paths.DataFolder, "achievements.json");
 
             if (!File.Exists(path) || Instance.resetAchievements.Value)
             {
                 File.WriteAllText(path, "");
             }
 
-            string everyAchievement = LoadEmbeddedJson("EveryAchievement.json");
-            Dictionary<string, Dictionary<string, int>>? internalJson = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, int>>>(everyAchievement);
+            string pluginsPath = Paths.PluginPath;
+            string[] plugins = Directory.GetDirectories(pluginsPath);
 
-            string currentAchievements = File.ReadAllText(path);
-            Dictionary<string, Dictionary<string, int>>? currentJson = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, int>>>(currentAchievements);
-
-            if (currentJson != null && internalJson != null)
+            foreach (string modFolder in plugins)
             {
-                foreach (string key in internalJson.Keys)
+                if (!Directory.Exists(modFolder)) continue;
+                string everyAchievementPath = Path.Combine(modFolder, "achievements.json");
+                if (!File.Exists(everyAchievementPath)) continue;
+                string everyAchievement = File.ReadAllText(everyAchievementPath);
+                Dictionary<string, Dictionary<string, string>>? internalJson = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(everyAchievement);
+
+                string currentAchievements = File.ReadAllText(path);
+                Dictionary<string, Dictionary<string, string>>? currentJson = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(currentAchievements);
+
+                if (internalJson != null)
                 {
-                    if (currentJson.ContainsKey(key))
+                    foreach (var dict in internalJson)
                     {
-                        internalJson[key]["progress"] = currentJson[key]["progress"];
-                        internalJson[key]["completed"] = currentJson[key]["completed"];
+                        if (currentJson != null)
+                        {
+                            if (currentJson.ContainsKey(dict.Key))
+                            {
+                                internalJson[dict.Key]["progress"] = currentJson[dict.Key]["progress"];
+                                internalJson[dict.Key]["completed"] = currentJson[dict.Key]["completed"];
+                            }
+                        }
+
+                        Achievements.Add(dict.Key, dict.Value);
+                        Logger.LogInfo("Added Achievement " + dict.Key);
                     }
                 }
             }
 
-            return internalJson ?? new Dictionary<string, Dictionary<string, int>>();
-            
-        }
-
-        public static Dictionary<string, string> GetAchievementDescriptions()
-        {
-            string everyDescription = LoadEmbeddedJson("EveryAchievementDescription.json");
-            Dictionary<string, string>? internalJson = JsonConvert.DeserializeObject<Dictionary<string, string>>(everyDescription);
-
-            return internalJson ?? new Dictionary<string, string>();
+            WriteAchievements();
 
         }
 
@@ -311,7 +446,7 @@ namespace NachoAchievements
         {
             Util.Paths.CheckFolders();
 
-            string path = Path.Combine(Util.Paths.DataFolder, "advancements.json");
+            string path = Path.Combine(Util.Paths.DataFolder, "achievements.json");
 
             File.WriteAllText(path, JsonConvert.SerializeObject(Achievements));
         }
@@ -329,22 +464,20 @@ namespace NachoAchievements
 
             for (int i = 0; i < keys.Count; i++)
             {
-                List<string> achievements = [.. Achievements[keys[i]].Keys];
-                int checkCompCount = 0;
-                for (int j = 0; j < achievements.Count; j++)
+                if (Achievements[keys[i]].ContainsValue("Unique") && !CheckIfSingleRun(keys[i]))
                 {
-                    if (achievements[j] == "progress") continue;
-                    if (achievements[j] == "completed") continue;
-                    var TMP = CreateAchievementsText(new Vector2(-150, 450 - count * 100), true);
-                    checkCompCount++;
-                    count++;
-                    string text = achievements[j];
-                    if (Achievements[keys[i]][achievements[j]] > 1) text += " " + (Achievements[keys[i]]["progress"] <= Achievements[keys[i]][achievements[j]] ? Achievements[keys[i]]["progress"] : Achievements[keys[i]][achievements[j]]) + " / " + (Achievements[keys[i]][achievements[j]] != 999 ? Achievements[keys[i]][achievements[j]] : "?");
-                    TMP.text = text;
-                    if (Achievements[keys[i]]["completed"] >= checkCompCount)
-                    {
-                        TMP.color = Color.yellow;
-                    }
+                    Achievements[keys[i]]["progress"] = ES3.Load(keys[i], GameNetworkManager.generalSaveDataName, new List<string>()).Count.ToString();
+                }
+
+
+                var TMP = CreateAchievementsText(new Vector2(-150, 450 - count * 100), true);
+                count++;
+                string text = keys[i];
+                if (int.Parse(Achievements[keys[i]]["count"]) > 1) text += " " + (int.Parse(Achievements[keys[i]]["progress"]) <= int.Parse(Achievements[keys[i]]["count"]) ? Achievements[keys[i]]["progress"] : Achievements[keys[i]]["count"]) + " / " + (int.Parse(Achievements[keys[i]]["count"]) != 999 ? Achievements[keys[i]]["count"] : "?");
+                TMP.text = text;
+                if (Achievements[keys[i]]["completed"] == "true")
+                {
+                    TMP.color = Color.yellow;
                 }
             }
         }
@@ -449,280 +582,6 @@ namespace NachoAchievements
             TMP = NachoAchievements.CreateAchievementsText(tmp.GetComponent<RectTransform>().anchoredPosition + new Vector2(600, 0), false);
             TMP.text = text;
             prevText = text;
-        }
-
-        public IEnumerator CheckSingleRunProgress()
-        {
-            yield return new WaitForSeconds(0.4f);
-            Instance.ResetSingleRunProgress();
-
-            Instance.AddTojetpackCollectsingleRunProgress();
-            Instance.AddToWalkieCollectProgress();
-            Instance.AddToMuseumProgress();
-            Instance.AddToSigurdLoreProgress();
-            Instance.AddToInteriorDecoratorProgress();
-            Instance.AddToMoonsVisitedProgressServerRpc();
-
-            List<string> keys1 = [.. scrapFound.Keys];
-
-            foreach (string scrap in keys1)
-            {
-                scrapFound[scrap] = 0;
-            }
-
-            List<string> keys = [.. Achievements.Keys];
-
-            foreach (string achievement in keys)
-            {
-                if (achievement == "singleRunEveryEnemyKilled")
-                {
-                    Instance.ReportEnemyKilled(SteamClient.SteamId, string.Empty);
-                    Achievements[achievement]["progress"] = enemiesKilled.Count;
-                }
-
-                List<string> keys2 = [.. Achievements[achievement].Keys];
-                int checkCompCount = 0;
-
-                foreach (string a in keys2)
-                {
-                    if (a == "progress") continue;
-                    if (a == "completed") continue;
-                    checkCompCount++;
-                    if (Achievements[achievement]["progress"] >= Achievements[achievement][a] && Achievements[achievement]["completed"] < checkCompCount)
-                    {
-                        CreateAchievementGetText(a);
-                        Achievements[achievement]["completed"] = checkCompCount;
-                        if (achievement != "getAll") AddAchievement("getAll");
-                    }
-                }
-            }
-
-            WriteAchievements();
-
-        }
-
-        public void ResetSingleRunProgress()
-        {
-            List<string> keys = [.. Achievements.Keys];
-
-            foreach (string achievement in keys)
-            {
-                if (achievement.Contains("singleRun"))
-                {
-                    Achievements[achievement]["progress"] = 0;
-                }
-            }
-        }
-
-        public void AddToMuseumProgress()
-        {
-            int museumAchievement = 0;
-
-            GrabbableObject[] array = Object.FindObjectsOfType<GrabbableObject>();
-            foreach (var grabbable in array)
-            {
-                bool inShip = false;
-
-                if (grabbable.itemProperties.isScrap && !grabbable.deactivated && !grabbable.itemUsedUp && StartOfRound.Instance.shipBounds.bounds.Contains(grabbable.gameObject.transform.position))
-                {
-                    inShip = true;
-                }
-                
-
-                if (inShip)
-                {
-                    if (scrapFound.ContainsKey(grabbable.itemProperties.itemName))
-                    {
-                        if (scrapFound[grabbable.itemProperties.itemName] == 0)
-                        {
-                            museumAchievement++;
-                            scrapFound[grabbable.itemProperties.itemName] = 1;
-                        }
-                    }
-                }
-            }
-
-            Achievements["singleRunAllScrapTypes"]["progress"] = museumAchievement;
-        }
-
-        public void AddTojetpackCollectsingleRunProgress()
-        {
-            JetpackItem[] array = Object.FindObjectsOfType<JetpackItem>();
-
-            foreach (var jet in array)
-            {
-                if (jet.itemProperties.itemName == "Jetpack" && !jet.deactivated && !jet.itemUsedUp && StartOfRound.Instance.shipBounds.bounds.Contains(jet.gameObject.transform.position))
-                {
-                    AddAchievement("jetpackCollectsingleRun");
-                }
-            }
-        }
-
-        public void AddToInteriorDecoratorProgress()
-        {
-            var unlockables = StartOfRound.Instance.unlockablesList.unlockables;
-
-            foreach (var unlockable in unlockables)
-            {
-                if (unlockable.hasBeenUnlockedByPlayer && !unlockable.inStorage && !unlockable.alreadyUnlocked)
-                {
-                    AddAchievement("decoratorsingleRun");
-                }
-            }
-        }
-
-        public void AddToWalkieCollectProgress()
-        {
-            WalkieTalkie[] array2 = Object.FindObjectsOfType<WalkieTalkie>();
-
-            foreach (var walkie in array2)
-            {
-                if (walkie.itemProperties.itemName == "Walkie-talkie" && !walkie.deactivated && !walkie.itemUsedUp && StartOfRound.Instance.shipBounds.bounds.Contains(walkie.gameObject.transform.position))
-                {
-                    AddAchievement("thirtyWalkiessingleRun");
-                }
-            }
-        }
-
-        [ServerRpc(RequireOwnership = false)]
-        public void AddToMoonsVisitedProgressServerRpc()
-        {
-            StartOfRoundPatches.moonsVisited = ES3.Load("NachoMoonsVisited", GameNetworkManager.Instance.currentSaveFileName, new List<int>());
-            AddToMoonsVisitedProgressClientRpc(StartOfRoundPatches.moonsVisited.ToArray());
-        }
-
-        [ClientRpc]
-        public void AddToMoonsVisitedProgressClientRpc(int[] moons)
-        {
-            StartOfRoundPatches.moonsVisited = moons.ToList();
-
-            int current = Achievements["visitMoonssingleRun"]["progress"];
-
-            for (int i = current; i < moons.Length; i++)
-            {
-                AddAchievement("visitMoonssingleRun");
-            }
-        }
-
-        public void AddToSigurdLoreProgress()
-        {
-            Terminal terminal = Object.FindObjectOfType<Terminal>();
-            int storyLogs = 0;
-            int enemyLogs = 0;
-
-            if (terminal != null)
-            {
-                for (int i = 0; i < terminal.logEntryFiles.Count; i++)
-                {
-                    if (terminal.logEntryFiles[i].storyLogFileID != -1)
-                    {
-                        storyLogs++;
-                    }
-                }
-
-                for (int i = 0; i < terminal.enemyFiles.Count; i++)
-                {
-                    if (terminal.enemyFiles[i].creatureFileID != -1)
-                    {
-                        enemyLogs++;
-                    }
-                }
-
-                Achievements["enemyEntryCollectsingleRun"]["Enemy Master"] = enemyLogs;
-                Achievements["sigurdEntryCollectsingleRun"]["Lore Expert"] = storyLogs;
-
-                foreach (var storyLog in terminal.unlockedStoryLogs)
-                {
-                    AddAchievement("sigurdEntryCollectsingleRun");
-                }
-
-                foreach (var enemyLog in terminal.scannedEnemyIDs)
-                {
-                    AddAchievement("enemyEntryCollectsingleRun");
-                }
-            }
-        }
-
-        public static void AddItems()
-        {
-            foreach (var item in StartOfRound.Instance.allItemsList.itemsList)
-            {
-                if (item.isScrap) scrapFound[item.itemName] = 0;
-            }
-
-            Achievements["singleRunAllScrapTypes"]["Museum%"] = scrapFound.Count;
-        }
-
-        [ServerRpc(RequireOwnership = false)]
-        public void AddKillServerRpc(ulong id, string enemyName)
-        {
-            var list = ES3.Load("NachoEnemiesKilled" + id, GameNetworkManager.Instance.currentSaveFileName, new List<string>());
-
-            if (enemyName != string.Empty && !list.Contains(enemyName))
-            {
-                list.Add(enemyName);
-                ES3.Save("NachoEnemiesKilled" + id, list, GameNetworkManager.Instance.currentSaveFileName);
-                AddKillAchievementClientRpc(id);
-            }
-
-            AddKillClientRpc(id, list.ToArray());
-        }
-
-        [ClientRpc]
-        private void AddKillClientRpc(ulong id, string[] list)
-        {
-            if (id != SteamClient.SteamId)
-                return;
-
-            enemiesKilled = list.ToList();
-        }
-
-        [ClientRpc]
-        public void AddKillAchievementClientRpc(ulong id)
-        {
-            if (id != SteamClient.SteamId)
-                return;
-
-            AddAchievement("singleRunEveryEnemyKilled");
-        }
-        public void ReportEnemyKilled(ulong killerId, string enemyName)
-        {
-            AddKillServerRpc(killerId, enemyName);
-        }
-
-        public void SetArtFullClearCount()
-        {
-            Achievements["artFullClear"]["MinMaxing"] = 0;
-            GrabbableObject[] array = UnityEngine.Object.FindObjectsOfType<GrabbableObject>();
-            for (int num6 = 0; num6 < array.Length; num6++)
-            {
-                if (array[num6].itemProperties.isScrap && !array[num6].isInShipRoom && !array[num6].isInElevator)
-                {
-                    Achievements["artFullClear"]["MinMaxing"]++;
-                }
-            }
-            
-        }
-
-        public IEnumerator CheckKillEnemyAchievements(EnemyAI __instance, int force = 1, PlayerControllerB playerWhoHit = null)
-        {
-            yield return new WaitForFixedUpdate();
-            if (EnemyAIPatches.enemyWasKilled.Contains(__instance) && EnemyAIPatches.enemyWasAlive.Contains(__instance))
-            {
-                if (playerWhoHit != null && StartOfRound.Instance.localPlayerController == playerWhoHit)
-                {
-                    if (__instance.enemyType.enemyName == "Nutcracker") NachoAchievements.AddAchievement("killNutcracker");
-                    else if (__instance.enemyType.enemyName == "Maneater") NachoAchievements.AddAchievement("killManeater");
-                    else if (__instance.enemyType.enemyName == "Flowerman" && force == 1) NachoAchievements.AddAchievement("killBrackenShovel");
-                    else if (__instance.enemyType.enemyName == "Manticoil") NachoAchievements.AddAchievement("killManticoil");
-                }
-
-                if (playerWhoHit != null)
-                    NachoAchievements.Instance.ReportEnemyKilled(playerWhoHit.playerSteamId, __instance.enemyType.enemyName);
-            }
-            yield return new WaitForFixedUpdate();
-            EnemyAIPatches.enemyWasKilled.Clear();
-            EnemyAIPatches.enemyWasAlive.Clear();
         }
     }
 }

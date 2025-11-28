@@ -24,7 +24,13 @@ namespace NachoAchievements.Patches
                         EnemyAICollisionDetect componentInChildren2 = array[i].gameObject.GetComponentInChildren<EnemyAICollisionDetect>();
                         if (componentInChildren2 != null && componentInChildren2.mainScript.IsOwner && num2 < 4.5f && componentInChildren2.mainScript.enemyHP > 0 && componentInChildren2.mainScript.enemyType.canDie && !list.Contains(componentInChildren2.mainScript))
                         {
-                            NachoAchievements.AddAchievement("killWithLightning");
+                            Dictionary<string, string> callback = new Dictionary<string, string>();
+                            callback.Add("callback", "On Kill Enemy");
+                            callback.Add("enemy", componentInChildren2.mainScript.enemyType.enemyName);
+                            callback.Add("weapon", "Lightning");
+                            callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
+                            callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                            NachoAchievements.CheckAchievements(callback);
                             list.Add(componentInChildren2.mainScript);
                         }
                     }

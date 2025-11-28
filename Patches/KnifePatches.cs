@@ -1,5 +1,4 @@
-﻿using GameNetcodeStuff;
-using HarmonyLib;
+﻿using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,10 +8,10 @@ namespace NachoAchievements.Patches
     [HarmonyPatch(typeof(KnifeItem))]
     internal class KnifePatches
     {
+
         [HarmonyPatch(nameof(KnifeItem.HitKnife))]
         [HarmonyPrefix]
-        
-        private static void CheckBackstab(KnifeItem __instance, bool cancel = false)
+        private static void OnHitKnife(KnifeItem __instance, bool cancel = false)
         {
             if (__instance.playerHeldBy == StartOfRound.Instance.localPlayerController)
             {
@@ -38,28 +37,25 @@ namespace NachoAchievements.Patches
                                 continue;
                             }
                             Vector3 forward = __instance.previousPlayerHeldBy.gameplayCamera.transform.forward;
-
-                            if (objectsHitByKnifeList[i].transform.GetComponent<PlayerControllerB>() != null)
-                            {
-                                var playerHit = objectsHitByKnifeList[i].transform.GetComponent<PlayerControllerB>();
-                                if (!playerHit.isPlayerDead && playerHit.AllowPlayerDeath())
-                                {
-                                    if (playerHit.health - 20 <= 0 && playerHit.criticallyInjured)
-                                    {
-                                        NachoAchievements.AddAchievement("killCrewmate");
-                                    }
-                                }
-                            }
                             EnemyAICollisionDetect component2 = objectsHitByKnifeList[i].transform.GetComponent<EnemyAICollisionDetect>();
                             if (component2 != null)
                             {
                                 if (!(component2.mainScript == null) && !list.Contains(component2.mainScript))
                                 {
-                                    if (component2.mainScript.enemyType.enemyName == "Butler" && !component2.mainScript.isEnemyDead) NachoAchievements.AddAchievement("killButlerStab");
+                                    if (component2.mainScript.enemyHP > 0 && component2.mainScript.enemyHP - (component2.mainScript.enemyType.enemyName == "Butler" ? 100 : __instance.knifeHitForce) <= 0)
+                                    {
+                                        Dictionary<string, string> callback = new Dictionary<string, string>();
+                                        callback.Add("callback", "On Kill Enemy");
+                                        callback.Add("enemy", component2.mainScript.enemyType.enemyName);
+                                        callback.Add("weapon", "Knife");
+                                        callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
+                                        callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                                        NachoAchievements.CheckAchievements(callback);
+                                    }
+
                                     list.Add(component2.mainScript);
                                 }
                             }
-
                         }
                     }
                 }

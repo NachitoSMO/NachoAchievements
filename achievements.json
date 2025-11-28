@@ -1,0 +1,256 @@
+{
+    "I Found Something": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Scrap Collected",
+        "scrap": "Any",
+        "description": "Collect a piece of Scrap"
+    },
+    "Scrap Collector": {
+        "progress": "0",
+        "completed": "false",
+        "count": "50",
+        "callback": "On Scrap Collected",
+        "scrap": "Any",
+        "description": "Collect 50 pieces of Scrap"
+    },
+    "Scrap Master": {
+        "progress": "0",
+        "completed": "false",
+        "count": "100",
+        "callback": "On Scrap Collected",
+        "scrap": "Any",
+        "description": "Collect 100 pieces of Scrap"
+    },
+    "Enemy Killer": {
+        "progress": "0",
+        "completed": "false",
+        "count": "10",
+        "callback": "On Kill Enemy",
+        "enemy": "Any",
+        "weapon": "Any",
+        "description": "Kill 10 Entities"
+    },
+    "Slime Party": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Enemy Sound Heard",
+        "enemy": "Blob",
+        "sound": "5",
+        "soundMinDistance": "12",
+        "description": "Have a dance party with a Slime"
+    },
+    "Staring Contest": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "Enemy Stared At",
+        "enemy": "Girl",
+        "description": "Stare at a Ghost Girl for 5 seconds straight"
+    },
+    "Fan fan": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Death",
+        "cause": "15",
+        "description": "Die to a fan"
+    },
+    "There's Lore?!": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Log Collected",
+        "logID": "Any",
+        "description": "Collect any Sigurd log"
+    },
+    "Lore Expert": {
+        "progress": "0",
+        "completed": "false",
+        "count": "14",
+        "callback": "On Log Collected",
+        "logID": "Unique",
+        "description": "Collect every Sigurd log"
+    },
+    "MatPat": {
+        "progress": "0",
+        "completed": "false",
+        "count": "14",
+        "callback": "On Log Collected",
+        "logID": "Unique",
+        "single run": "true",
+        "description": "Collect every Sigurd log... in a single run"
+    },
+    "Fading Fear": {
+        "progress": "0",
+        "completed": "false",
+        "count": "15",
+        "callback": "On Kill Enemy",
+        "enemy": "Unique",
+        "description": "Kill every unique entity"
+    },
+    "Zero Fear": {
+        "progress": "0",
+        "completed": "false",
+        "count": "15",
+        "callback": "On Kill Enemy",
+        "enemy": "Unique",
+        "single run": "true",
+        "description": "Kill every unique entity... in a single run"
+    },
+    "Around the World": {
+        "progress": "0",
+        "completed": "false",
+        "count": "11",
+        "callback": "On Level Finished Loading",
+        "moon": "Unique",
+        "description": "Visit every moon (company building excluded)"
+    },
+    "World Tour": {
+        "progress": "0",
+        "completed": "false",
+        "count": "11",
+        "callback": "On Level Finished Loading",
+        "moon": "Unique",
+        "single run": "true",
+        "description": "Visit every moon... in a single run (company building excluded)"
+    },
+    "Zeus": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Kill Enemy",
+        "weapon": "Lightning",
+        "description": "Kill any enemy using the power of lightning"
+    },
+    "My Collection": {
+        "progress": "0",
+        "completed": "false",
+        "count": "69",
+        "callback": "On Scrap Collected",
+        "scrap": "Unique",
+        "description": "Collect every unique piece of scrap"
+    },
+    "Museum%": {
+        "progress": "0",
+        "completed": "false",
+        "count": "69",
+        "callback": "On Scrap Collected",
+        "scrap": "Unique",
+        "single run": "true",
+        "description": "Collect every unique piece of scrap... in a single run"
+    },
+    "Worth It": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Scrap Collected",
+        "scrap": "Apparatus",
+        "moon": "12",
+        "description": "Collect the Apparatus while in Embrion"
+    },
+    "Vendetta": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Kill Enemy",
+        "enemy": "Manticoil",
+        "description": "Kill a Manticoil"
+    },
+    "Hunting Day": {
+        "progress": "0",
+        "completed": "false",
+        "count": "3",
+        "callback": "On Kill Enemy",
+        "weapon": "Shotgun",
+        "enemy": "Any",
+        "single day": "true",
+        "description": "Kill at least 3 enemies using a Double-Barrel in a single day"
+    },
+    "But-stabber": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Kill Enemy",
+        "enemy": "Butler",
+        "weapon": "Knife",
+        "description": "Give a Butler a taste of its own medicine"
+    },
+    "Overkill": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Kill Enemy",
+        "enemy": "Tulip Snake",
+        "weapon": "Shotgun",
+        "description": "Kill a Tulip Snake using a Double-Barrel"
+    },
+    "Dog Plush??": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Scrap Collected",
+        "scrap": "Zed Dog",
+        "description": "Collect a Zed Dog"
+    },
+    "Jet Squad": {
+        "progress": "0",
+        "completed": "false",
+        "count": "4",
+        "callback": "On Item Collected",
+        "scrap": "Jetpack",
+        "single run": "true",
+        "description": "Collect 4 Jetpacks in a single run"
+    },
+    "Overprepared": {
+        "progress": "0",
+        "completed": "false",
+        "count": "30",
+        "callback": "On Item Collected",
+        "scrap": "Walkie-talkie",
+        "single run": "true",
+        "description": "Collect 30 Walkie-talkies in a single run"
+    },
+    "Dessert": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Kill Enemy",
+        "weapon": "Worm",
+        "description": "Get a worm to kill an enemy"
+    },
+    "Deforestation": {
+        "progress": "0",
+        "completed": "false",
+        "count": "50",
+        "callback": "On Tree Destroyed",
+        "description": "Destroy 50 trees"
+    },
+    "Kamikaze": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Kill Enemy",
+        "weapon": "Landmine",
+        "description": "Kill an Entity by stepping on a Landmine"
+    },
+    "Lethal Company": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "callback": "On Death",
+        "moon": "3",
+        "description": "Die in the Company moon"
+    },
+    "Challenger": {
+        "progress": "0",
+        "completed": "false",
+        "count": "1",
+        "rank": "2",
+        "callback": "On Rank Or Above Gotten",
+        "moon": "3",
+        "description": "Get a rank of A or above in the challenge moon"
+    }
+}

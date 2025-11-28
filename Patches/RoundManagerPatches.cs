@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NachoAchievements.Patches
@@ -6,63 +7,42 @@ namespace NachoAchievements.Patches
     [HarmonyPatch(typeof(RoundManager))]
     internal class RoundManagerPatches
     {
-        public static int sapsuckerEggsToday = 0;
         [HarmonyPatch(nameof(RoundManager.CollectNewScrapForThisRound))]
         [HarmonyPrefix]
         private static void AddScrapAchievements(RoundManager __instance, GrabbableObject scrapObject)
         {
-            NachoAchievements.Instance.StartCoroutine(NachoAchievements.Instance.CheckSingleRunProgress());
-
-            if (!scrapObject.scrapPersistedThroughRounds && !__instance.scrapCollectedThisRound.Contains(scrapObject) && scrapObject.itemProperties.isScrap)
+            if (!scrapObject.scrapPersistedThroughRounds && !__instance.scrapCollectedThisRound.Contains(scrapObject))
             {
-                if (scrapObject.itemProperties.itemName == "Hive" && scrapObject.playerHeldBy == StartOfRound.Instance.localPlayerController)
+                if (scrapObject.itemProperties.isScrap)
                 {
-                    NachoAchievements.AddAchievement("beesCollect");
+                    Dictionary<string, string> callback = new Dictionary<string, string>();
+                    callback.Add("callback", "On Scrap Collected");
+                    callback.Add("scrap", scrapObject.itemProperties.itemName);
+                    callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
+                    callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                    NachoAchievements.CheckAchievements(callback);
                 }
-
-                if (scrapObject.itemProperties.itemName == "Zed Dog" && scrapObject.playerHeldBy == StartOfRound.Instance.localPlayerController)
+                else
                 {
-                    NachoAchievements.AddAchievement("zedDogCollect");
-                }
-
-                if (scrapObject.playerHeldBy == StartOfRound.Instance.localPlayerController)
-                    NachoAchievements.AddAchievement("scrapCollect");
-
-                if (scrapObject.itemProperties.itemName == "Apparatus" && StartOfRound.Instance.currentLevelID == 12 && RoundManager.Instance.dungeonFinishedGeneratingForAllPlayers)
-                {
-                    NachoAchievements.AddAchievement("embrionApparatus");
-                }
-
-                if (StartOfRound.Instance.currentLevelID == 10 && NachoAchievements.Achievements["artFullClear"]["MinMaxing"] != 999)
-                {
-                    NachoAchievements.AddAchievement("artFullClear");
-                }
-
-                if (scrapObject.itemProperties.itemName == "Egg")
-                {
-                    sapsuckerEggsToday++;
+                    Dictionary<string, string> callback = new Dictionary<string, string>();
+                    callback.Add("callback", "On Item Collected");
+                    callback.Add("scrap", scrapObject.itemProperties.itemName);
+                    callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
+                    callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                    NachoAchievements.CheckAchievements(callback);
                 }
             }
         }
 
         [HarmonyPatch(nameof(RoundManager.FinishGeneratingLevel))]
         [HarmonyPostfix]
-        private static void AfterGenerationDone()
+        private static void OnLevelFinishedLoading(RoundManager __instance)
         {
-            if (StartOfRound.Instance.currentLevelID == 10)
-            {
-                NachoAchievements.Instance.Invoke("SetArtFullClearCount", 2f);
-            }
-
-            if (!StartOfRoundPatches.moonsVisited.Contains(StartOfRound.Instance.currentLevelID))
-                StartOfRoundPatches.moonsVisited.Add(StartOfRound.Instance.currentLevelID);
-
-            if (StartOfRound.Instance.localPlayerController.isHostPlayerObject)
-                ES3.Save("NachoMoonsVisited", StartOfRoundPatches.moonsVisited, GameNetworkManager.Instance.currentSaveFileName);
-
-            sapsuckerEggsToday = 0;
-
-            NachoAchievements.Instance.StartCoroutine(NachoAchievements.Instance.CheckSingleRunProgress());
+            Dictionary<string, string> callback = new Dictionary<string, string>();
+            callback.Add("callback", "On Level Finished Loading");
+            callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
+            callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+            NachoAchievements.CheckAchievements(callback);
         }
 
         [HarmonyPatch(nameof(RoundManager.DestroyTreeAtPosition))]
@@ -74,7 +54,11 @@ namespace NachoAchievements.Patches
                 int num = Physics.OverlapSphereNonAlloc(pos, range, __instance.tempColliderResults, 33554432, QueryTriggerInteraction.Ignore);
                 if (num != 0)
                 {
-                    NachoAchievements.AddAchievement("destroyTrees");
+                    Dictionary<string, string> callback = new Dictionary<string, string>();
+                    callback.Add("callback", "On Tree Destroyed");
+                    callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
+                    callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                    NachoAchievements.CheckAchievements(callback);
                 }
 
                 TerrainObstacleTriggerPatches.driverWhoCollidedIsSelf = false;

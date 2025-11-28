@@ -78,7 +78,13 @@ namespace NachoAchievements.Patches
                         {
                             if (componentInChildren2.mainScript.isEnemyDead && enemiesThatWereAlive.Contains(componentInChildren2.mainScript))
                             {
-                                NachoAchievements.AddAchievement("killEnemyLandmine");
+                                Dictionary<string, string> callback = new Dictionary<string, string>();
+                                callback.Add("callback", "On Kill Enemy");
+                                callback.Add("enemy", componentInChildren2.mainScript.enemyType.enemyName);
+                                callback.Add("weapon", "Landmine");
+                                callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
+                                callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                                NachoAchievements.CheckAchievements(callback);
                             }
                         }
                     }

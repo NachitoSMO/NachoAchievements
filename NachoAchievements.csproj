@@ -46,11 +46,6 @@
     </PropertyGroup>
     <ItemGroup>
       <None Remove="everyAchievement.json" />
-      <None Remove="EveryAchievementDescription.json" />
-    </ItemGroup>
-    <ItemGroup>
-      <EmbeddedResource Include="EveryAchievement.json" />
-      <EmbeddedResource Include="EveryAchievementDescription.json" />
     </ItemGroup>
 
     <!-- Primary Package References -->
