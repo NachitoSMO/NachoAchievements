@@ -72,7 +72,7 @@ namespace NachoAchievements
 
             Patch();
 
-            resetAchievements = Config.Bind<bool>("Debug", "Reset Achievements", false, new ConfigDescription("Wether to reset every achievement next time you boot up the game"));
+            resetAchievements = Config.Bind<bool>("Debug", "Reset Achievements", false, new ConfigDescription("Wether to reset every achievement next time you boot up the game (does not include save file-dependent achievements)"));
 
             CreateAchievements();
 
