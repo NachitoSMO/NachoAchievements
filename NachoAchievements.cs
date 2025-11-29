@@ -280,12 +280,17 @@ namespace NachoAchievements
                 
             }
 
+            CheckAchievementCount();
+
             foreach (string a in keys)
             {
-                if (int.Parse(Achievements[a]["progress"]) >= int.Parse(Achievements[a]["count"]) && Achievements[a]["completed"] == "false")
+                if (int.TryParse(Achievements[a]["count"], out int result))
                 {
-                    CreateAchievementGetText(a);
-                    Achievements[a]["completed"] = "true";
+                    if (int.Parse(Achievements[a]["progress"]) >= result && Achievements[a]["completed"] == "false")
+                    {
+                        CreateAchievementGetText(a);
+                        Achievements[a]["completed"] = "true";
+                    }
                 }
             }
 
@@ -434,6 +439,8 @@ namespace NachoAchievements
 
             List<string> keys = [.. Achievements.Keys];
 
+            CheckAchievementCount();
+
             int count = 0;
 
             for (int i = 0; i < keys.Count; i++)
@@ -447,11 +454,62 @@ namespace NachoAchievements
                 var TMP = CreateAchievementsText(new Vector2(-150, 450 - count * 100), true);
                 count++;
                 string text = keys[i];
-                if (int.Parse(Achievements[keys[i]]["count"]) > 1) text += " " + (int.Parse(Achievements[keys[i]]["progress"]) <= int.Parse(Achievements[keys[i]]["count"]) ? Achievements[keys[i]]["progress"] : Achievements[keys[i]]["count"]) + " / " + (int.Parse(Achievements[keys[i]]["count"]) != 999 ? Achievements[keys[i]]["count"] : "?");
+                if (int.TryParse(Achievements[keys[i]]["count"], out int result))
+                {
+                    if (result > 1)
+                        text += " " + (int.Parse(Achievements[keys[i]]["progress"]) <= result ? Achievements[keys[i]]["progress"] : result) + " / " + result;
+                }
                 TMP.text = text;
                 if (Achievements[keys[i]]["completed"] == "true")
                 {
                     TMP.color = Color.yellow;
+                }
+            }
+        }
+
+        public static void CheckAchievementCount()
+        {
+            List<string> keys = [.. Achievements.Keys];
+
+            foreach (string key in keys)
+            {
+                if (Achievements[key].ContainsKey("count callback"))
+                {
+                    if (Achievements[key]["count callback"] == "Unique Scrap Total")
+                    {
+                        int scrapItems = 0;
+
+                        foreach (var scrap in StartOfRound.Instance.allItemsList.itemsList)
+                        {
+                            if (scrap.isScrap) scrapItems++;
+                        }
+
+                        Achievements[key]["count"] = scrapItems.ToString();
+                    }
+                    else if (Achievements[key]["count callback"] == "All Scrap Today")
+                    {
+                        if (RoundManager.Instance.dungeonFinishedGeneratingForAllPlayers)
+                        {
+                            int outsideShip = 0;
+                            int insideShip = 0;
+                            foreach (GrabbableObject grabbable in Object.FindObjectsOfType<GrabbableObject>())
+                            {
+                                if (grabbable.itemProperties && grabbable.itemProperties.isScrap)
+                                {
+                                    if (!grabbable.isInShipRoom)
+                                    {
+                                        outsideShip++;
+                                    }
+                                    else if (RoundManager.Instance.scrapCollectedThisRound.Contains(grabbable))
+                                    {
+                                        insideShip++;
+                                    }
+                                }
+                            }
+
+                            Achievements[key]["count"] = (outsideShip + insideShip).ToString();
+                        }
+                    }
                 }
             }
         }

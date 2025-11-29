@@ -128,7 +128,8 @@
     "My Collection": {
         "progress": "0",
         "completed": "false",
-        "count": "69",
+        "count": "?",
+        "count callback": "Unique Scrap Total",
         "callback": "On Scrap Collected",
         "scrap": "Unique",
         "description": "Collect every unique piece of scrap"
@@ -252,5 +253,23 @@
         "callback": "On Rank Or Above Gotten",
         "moon": "3",
         "description": "Get a rank of A or above in the challenge moon"
+    },
+    "MinMaxing": {
+        "progress": "0",
+        "completed": "false",
+        "count": "?",
+        "count callback": "All Scrap Today",
+        "callback": "On Scrap Collected",
+        "moon": "10",
+        "single day": "true",
+        "description": "Get every piece of scrap in Artifice"
+    },
+    "Expert Thrower": {
+        "progress": "0",
+        "completed": "false",
+        "count": "17",
+        "callback": "On Death",
+        "cause": "Unique",
+        "description": "Die in 17 unique ways"
     }
 }
