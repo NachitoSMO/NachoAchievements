@@ -42,7 +42,7 @@ namespace NachoAchievements
 
         public static GameObject achievementGetTextSubtitle = null!;
 
-        public static TextMeshProUGUI achievementEnterButton = null!;
+        public static GameObject achievementEnterButton = null!;
 
         private static EventSystem events = EventSystem.current;
         private static PointerEventData pointerData;
@@ -83,31 +83,6 @@ namespace NachoAchievements
 
         private void Update()
         {
-            if (achievementEnterButton != null)
-            {
-                pointerData = new PointerEventData(events)
-                {
-                    position = Mouse.current.position.ReadValue()
-                };
-
-                List<RaycastResult> results = new List<RaycastResult>();
-                Canvas canvas = Object.FindObjectOfType<Canvas>();
-                GraphicRaycaster raycaster = canvas.GetComponent<GraphicRaycaster>();
-                raycaster.Raycast(pointerData, results);
-
-                foreach (var result in results)
-                {
-                    TextMeshProUGUI tmp = result.gameObject.GetComponentInChildren<TextMeshProUGUI>();
-                    if (tmp == achievementEnterButton)
-                    {
-                        if (Mouse.current.leftButton.isPressed)
-                        {
-                            OnAchievementsClicked();
-                        }
-                    }
-                }
-            }
-
             if (NachoAchievements.AchievementsText != null && NachoAchievements.AchievementsText.Count > 0)
             {
                 float amount = 200;
@@ -456,7 +431,6 @@ namespace NachoAchievements
             var QMM = GameNetworkManager.Instance.localPlayerController.quickMenuManager;
             QMM.mainButtonsPanel.SetActive(false);
             QMM.playerListPanel.SetActive(false);
-            Object.Destroy(achievementEnterButton.gameObject);
 
             List<string> keys = [.. Achievements.Keys];
 
