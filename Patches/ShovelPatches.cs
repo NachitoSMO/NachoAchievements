@@ -80,6 +80,7 @@ namespace NachoAchievements.Patches
                                 callback.Add("weapon", "Shovel");
                                 callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
                                 callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                                callback.Add("local", (__instance.playerHeldBy == StartOfRound.Instance.localPlayerController).ToString());
                                 NachoAchievements.CheckAchievements(callback);
                             }
                             list.Add(component2.mainScript);

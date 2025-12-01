@@ -28,68 +28,66 @@ namespace NachoAchievements.Patches
         [HarmonyPrefix]
         private static void OnMineExploded(Landmine __instance, Vector3 explosionPosition, bool spawnExplosionEffect = false, float killRange = 1f, float damageRange = 1f, int nonLethalDamage = 50, float physicsForce = 0f, GameObject overridePrefab = null, bool goThroughCar = false)
         {
-            if (playerSetOffMine)
-            {
-                Collider[] array = Physics.OverlapSphere(explosionPosition, damageRange, 2621448, QueryTriggerInteraction.Collide);
-                RaycastHit hitInfo;
-                for (int i = 0; i < array.Length; i++)
-                {
-                    float num2 = Vector3.Distance(explosionPosition, array[i].transform.position);
-                    if (Physics.Linecast(explosionPosition, array[i].transform.position + Vector3.up * 0.3f, out hitInfo, 1073742080, QueryTriggerInteraction.Ignore) && ((!goThroughCar && hitInfo.collider.gameObject.layer == 30) || num2 > 4f))
-                    {
-                        continue;
-                    }
 
-                    if (array[i].gameObject.layer == 19)
+            Collider[] array = Physics.OverlapSphere(explosionPosition, damageRange, 2621448, QueryTriggerInteraction.Collide);
+            RaycastHit hitInfo;
+            for (int i = 0; i < array.Length; i++)
+            {
+                float num2 = Vector3.Distance(explosionPosition, array[i].transform.position);
+                if (Physics.Linecast(explosionPosition, array[i].transform.position + Vector3.up * 0.3f, out hitInfo, 1073742080, QueryTriggerInteraction.Ignore) && ((!goThroughCar && hitInfo.collider.gameObject.layer == 30) || num2 > 4f))
+                {
+                    continue;
+                }
+
+                if (array[i].gameObject.layer == 19)
+                {
+                    EnemyAICollisionDetect componentInChildren2 = array[i].gameObject.GetComponentInChildren<EnemyAICollisionDetect>();
+                    if (componentInChildren2 != null && componentInChildren2.mainScript.IsOwner && num2 < 4.5f)
                     {
-                        EnemyAICollisionDetect componentInChildren2 = array[i].gameObject.GetComponentInChildren<EnemyAICollisionDetect>();
-                        if (componentInChildren2 != null && componentInChildren2.mainScript.IsOwner && num2 < 4.5f)
+                        if (!componentInChildren2.mainScript.isEnemyDead)
                         {
-                            if (!componentInChildren2.mainScript.isEnemyDead)
-                            {
-                                enemiesThatWereAlive.Add(componentInChildren2.mainScript);
-                            }
+                            enemiesThatWereAlive.Add(componentInChildren2.mainScript);
                         }
                     }
                 }
             }
+            
         }
 
         [HarmonyPatch(nameof(Landmine.SpawnExplosion))]
         [HarmonyPostfix]
         private static void PostMineExploded(Landmine __instance, Vector3 explosionPosition, bool spawnExplosionEffect = false, float killRange = 1f, float damageRange = 1f, int nonLethalDamage = 50, float physicsForce = 0f, GameObject overridePrefab = null, bool goThroughCar = false)
         {
-            if (playerSetOffMine)
+            Collider[] array = Physics.OverlapSphere(explosionPosition, damageRange, 2621448, QueryTriggerInteraction.Collide);
+            RaycastHit hitInfo;
+            for (int i = 0; i < array.Length; i++)
             {
-                Collider[] array = Physics.OverlapSphere(explosionPosition, damageRange, 2621448, QueryTriggerInteraction.Collide);
-                RaycastHit hitInfo;
-                for (int i = 0; i < array.Length; i++)
+                float num2 = Vector3.Distance(explosionPosition, array[i].transform.position);
+                if (Physics.Linecast(explosionPosition, array[i].transform.position + Vector3.up * 0.3f, out hitInfo, 1073742080, QueryTriggerInteraction.Ignore) && ((!goThroughCar && hitInfo.collider.gameObject.layer == 30) || num2 > 4f))
                 {
-                    float num2 = Vector3.Distance(explosionPosition, array[i].transform.position);
-                    if (Physics.Linecast(explosionPosition, array[i].transform.position + Vector3.up * 0.3f, out hitInfo, 1073742080, QueryTriggerInteraction.Ignore) && ((!goThroughCar && hitInfo.collider.gameObject.layer == 30) || num2 > 4f))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    if (array[i].gameObject.layer == 19)
+                if (array[i].gameObject.layer == 19)
+                {
+                    EnemyAICollisionDetect componentInChildren2 = array[i].gameObject.GetComponentInChildren<EnemyAICollisionDetect>();
+                    if (componentInChildren2 != null && componentInChildren2.mainScript.IsOwner && num2 < 4.5f)
                     {
-                        EnemyAICollisionDetect componentInChildren2 = array[i].gameObject.GetComponentInChildren<EnemyAICollisionDetect>();
-                        if (componentInChildren2 != null && componentInChildren2.mainScript.IsOwner && num2 < 4.5f)
+                        if (componentInChildren2.mainScript.isEnemyDead && enemiesThatWereAlive.Contains(componentInChildren2.mainScript))
                         {
-                            if (componentInChildren2.mainScript.isEnemyDead && enemiesThatWereAlive.Contains(componentInChildren2.mainScript))
-                            {
-                                Dictionary<string, string> callback = new Dictionary<string, string>();
-                                callback.Add("callback", "On Kill Enemy");
-                                callback.Add("enemy", componentInChildren2.mainScript.enemyType.enemyName);
-                                callback.Add("weapon", "Landmine");
-                                callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
-                                callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
-                                NachoAchievements.CheckAchievements(callback);
-                            }
+                            Dictionary<string, string> callback = new Dictionary<string, string>();
+                            callback.Add("callback", "On Kill Enemy");
+                            callback.Add("enemy", componentInChildren2.mainScript.enemyType.enemyName);
+                            callback.Add("weapon", "Landmine");
+                            callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
+                            callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                            callback.Add("local", playerSetOffMine.ToString());
+                            NachoAchievements.CheckAchievements(callback);
                         }
                     }
                 }
             }
+            
         }
     }
 }

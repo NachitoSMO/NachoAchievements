@@ -11,7 +11,7 @@ namespace NachoAchievements.Patches
         [HarmonyPrefix]
         private static void ExplodeGrenadePatch(StunGrenadeItem __instance)
         {
-            if (__instance.itemProperties.itemName == "Easter egg" && __instance.explodeOnThrow && __instance.playerThrownBy == StartOfRound.Instance.localPlayerController)
+            if (__instance.itemProperties.itemName == "Easter egg" && __instance.explodeOnThrow)
             {
                 Collider[] array = Physics.OverlapSphere(__instance.transform.position + Vector3.up * 0.2f, 3f, 2621448, QueryTriggerInteraction.Collide);
                 List<EnemyAI> list = new List<EnemyAI>();
@@ -32,6 +32,7 @@ namespace NachoAchievements.Patches
                                 callback.Add("weapon", "Easter egg");
                                 callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
                                 callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                                callback.Add("local", (__instance.playerThrownBy == StartOfRound.Instance.localPlayerController).ToString());
                                 NachoAchievements.CheckAchievements(callback);
                             }
                             list.Add(componentInChildren2.mainScript);

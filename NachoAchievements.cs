@@ -1,6 +1,7 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using DunGen;
 using HarmonyLib;
 using Newtonsoft.Json;
 using System.Collections.Generic;
@@ -252,7 +253,17 @@ namespace NachoAchievements
                             if (float.Parse(callbackVar) <= result) continue;
                         }
                     }
-                    else if (callbackVarSpecified == "Unique")
+                    else if (var == "amount in ship")
+                    {
+                        if ((callbackVarSpecified == "True" && callback.ContainsKey("scrap") && Achievements[key].ContainsKey("scrap") && callback["scrap"] == Achievements[key]["scrap"]) || callbackVarSpecified == "False")
+                        {
+                            shouldAddAchievement = false;
+                            Achievements[key]["progress"] = callbackVar;
+                            if (CheckIfSingleRun(key))
+                                Instance.SaveAchievementOnServerRpc(key, int.Parse(Achievements[key]["progress"]), StartOfRound.Instance.localPlayerController.playerSteamId);
+                        }
+                    }
+                    if (callbackVarSpecified == "Unique")
                     {
                         var unique = ES3.Load(key, GameNetworkManager.generalSaveDataName, new List<string>());
 
@@ -286,10 +297,10 @@ namespace NachoAchievements
             {
                 if (int.TryParse(Achievements[a]["count"], out int result))
                 {
-                    if (int.Parse(Achievements[a]["progress"]) >= result && Achievements[a]["completed"] == "false")
+                    if (int.Parse(Achievements[a]["progress"]) >= result && Achievements[a]["completed"] == "False")
                     {
                         CreateAchievementGetText(a);
-                        Achievements[a]["completed"] = "true";
+                        Achievements[a]["completed"] = "True";
                     }
                 }
             }
@@ -299,7 +310,7 @@ namespace NachoAchievements
 
         public static bool CheckIfSingleRun(string key)
         {
-            return (Achievements[key].ContainsKey("single run") && Achievements[key]["single run"] == "true");
+            return (Achievements[key].ContainsKey("single run") && Achievements[key]["single run"] == "True");
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -354,7 +365,7 @@ namespace NachoAchievements
             List<string> keys = [.. Achievements.Keys];
             foreach (string key in keys)
             {
-                if (Achievements[key].ContainsKey("single day") && Achievements[key]["single day"] == "true")
+                if (Achievements[key].ContainsKey("single day") && Achievements[key]["single day"] == "True")
                 {
                     Achievements[key]["progress"] = "0";
                 }
@@ -460,7 +471,7 @@ namespace NachoAchievements
                         text += " " + (int.Parse(Achievements[keys[i]]["progress"]) <= result ? Achievements[keys[i]]["progress"] : result) + " / " + result;
                 }
                 TMP.text = text;
-                if (Achievements[keys[i]]["completed"] == "true")
+                if (Achievements[keys[i]]["completed"] == "True")
                 {
                     TMP.color = Color.yellow;
                 }
@@ -496,7 +507,7 @@ namespace NachoAchievements
                             {
                                 if (grabbable.itemProperties && grabbable.itemProperties.isScrap)
                                 {
-                                    if (!grabbable.isInShipRoom)
+                                    if (!StartOfRound.Instance.shipBounds.bounds.Contains(grabbable.gameObject.transform.position))
                                     {
                                         outsideShip++;
                                     }
@@ -507,7 +518,8 @@ namespace NachoAchievements
                                 }
                             }
 
-                            Achievements[key]["count"] = (outsideShip + insideShip).ToString();
+                            if (Achievements[key].ContainsKey("moon") && (StartOfRound.Instance.currentLevelID.ToString() == Achievements[key]["moon"] || Achievements[key]["moon"] == "Any"))
+                                Achievements[key]["count"] = (outsideShip + insideShip).ToString();
                         }
                     }
                 }
@@ -557,7 +569,7 @@ namespace NachoAchievements
 
             TMP.font = AchievementsFont;
             TMP.fontSize = 128;
-            TMP.text = "ACHIEVEMENT GET!";
+            TMP.text = "<mark=#00000060>ACHIEVEMENT GET!</mark>";
             TMP.m_textAlignment = TextAlignmentOptions.Center;
             TMP.color = Color.yellow;
             TMP.SetOutlineThickness(0.05f);
@@ -565,7 +577,7 @@ namespace NachoAchievements
             TMP.characterSpacing = 8f;
 
             RectTransform rt = TMP.GetComponent<RectTransform>();
-            rt.anchoredPosition = rt.anchoredPosition + new Vector2(300, 500);
+            rt.anchoredPosition = rt.anchoredPosition + new Vector2(310, 500);
             rt.sizeDelta = rt.sizeDelta + new Vector2(1500, 0);
 
             achievementGetTextSubtitle = new GameObject("AchievementGetText");
@@ -576,7 +588,7 @@ namespace NachoAchievements
 
             TMP2.font = AchievementsFont;
             TMP2.fontSize = 64;
-            TMP2.text = text;
+            TMP2.text = "<mark=#00000060>" + text + "</mark>";
             TMP2.m_textAlignment = TextAlignmentOptions.Center;
             TMP2.color = Color.yellow;
             TMP2.SetOutlineThickness(0.05f);
@@ -585,7 +597,7 @@ namespace NachoAchievements
 
             RectTransform rt2 = TMP2.GetComponent<RectTransform>();
             rt2.sizeDelta = rt2.sizeDelta + new Vector2(1500, 0);
-            rt2.anchoredPosition = rt.anchoredPosition - new Vector2(0, 100);
+            rt2.anchoredPosition = rt.anchoredPosition - new Vector2(-2, 150);
 
             destroyTimer = 0;
             HUDManager.Instance.UIAudio.PlayOneShot(HUDManager.Instance.levelIncreaseSFX);

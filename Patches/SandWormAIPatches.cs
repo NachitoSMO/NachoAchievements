@@ -10,7 +10,7 @@ namespace NachoAchievements.Patches
         [HarmonyPostfix]
         private static void OnWormEatEnemy(SandWormAI __instance, EnemyAI enemyScript = null)
         {
-            if (__instance.emerged && __instance.targetPlayer == StartOfRound.Instance.localPlayerController)
+            if (__instance.emerged)
             {
                 Dictionary<string, string> callback = new Dictionary<string, string>();
                 callback.Add("callback", "On Kill Enemy");
@@ -18,6 +18,7 @@ namespace NachoAchievements.Patches
                 callback.Add("weapon", "Worm");
                 callback.Add("moon", StartOfRound.Instance.currentLevelID.ToString());
                 callback.Add("challenge", StartOfRound.Instance.isChallengeFile.ToString());
+                callback.Add("local", (__instance.targetPlayer == StartOfRound.Instance.localPlayerController).ToString());
                 NachoAchievements.CheckAchievements(callback);
             }
         }
