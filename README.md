@@ -71,6 +71,8 @@ There is also a `"count callback"` variable. This will replace your current achi
 `"Unique Scrap Total"`: `"count`" will equal the amount of unique scrap items in the game, including modded. <br>
 `"All Scrap Today"`: `"count"` will equal the amount of scrap that day, both collected and uncollected. Will update whenever any callback is triggered, if the `"moon"` variable is equal to the current level ID or "Any". <br>
 
+Some variables support the `"Unique"` keyword. If a variable is set to this keyword, e.g `"scrap"`, you will only progress on the achievement if the element passed on by the callback for this variable hasn't been passed before. In this case, it will only update if the scrap acquired hasn't been gotten before. If paired with the `"single run"` variable, the progress for this achievement will be saved on the host save file, otherwise, it will be saved to your local general save file.
+
 Here's a list of every callback, when they trigger, and other variables they output:
 
 | Callback                  | Other Variables                            | Description                                                        |
@@ -84,4 +86,5 @@ Here's a list of every callback, when they trigger, and other variables they out
 | `"On Level Finished Loading"` | None. `"local"` variable is excluded. | `"On Level Finished Loading"`: Triggers when a level finishes loading. Mostly used for internal purposes.
 | `"On Tree Destroyed"` | None                                        | `"On Tree Destroyed"`: Triggers when a tree is destroyed.
 | `"On Log Collected"` | None.  `"local"` variable is excluded.       | `"On Log Collected"`: Triggers when a log is collected.
+
 
